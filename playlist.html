@@ -16,6 +16,7 @@
 <div id="videoGrid" class="grid"></div>
 <div class="pagination">
   <button id="prevBtn" disabled>上一页</button>
+  <span id="pageInfo" class="page-info"></span>
   <button id="nextBtn" disabled>下一页</button>
 </div>
 
@@ -26,6 +27,7 @@ const channelId = qs('channel');
 if (channelId) document.getElementById('backLink').href = `channel.html?id=${channelId}`;
 
 let tokens = { current: '', prev: [], next: '' };
+let pageNum = 1;
 
 async function loadPlaylistInfo() {
   const data = await ytFetch('playlists', { part: 'snippet', id: playlistId });
@@ -56,14 +58,18 @@ async function loadVideos(pageToken = '') {
   tokens.next = data.nextPageToken || '';
   document.getElementById('prevBtn').disabled = tokens.prev.length === 0;
   document.getElementById('nextBtn').disabled = !tokens.next;
+  const totalPages = Math.max(1, Math.ceil(data.pageInfo.totalResults / data.pageInfo.resultsPerPage));
+  document.getElementById('pageInfo').textContent = `第 ${pageNum} 页 / 共 ${totalPages} 页`;
 }
 
 document.getElementById('nextBtn').onclick = () => {
   tokens.prev.push(tokens.current);
+  pageNum++;
   loadVideos(tokens.next);
 };
 document.getElementById('prevBtn').onclick = () => {
   const token = tokens.prev.pop() || '';
+  pageNum--;
   loadVideos(token);
 };
 

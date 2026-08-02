@@ -28,6 +28,7 @@
   <div id="videoGrid" class="grid"></div>
   <div class="pagination">
     <button id="videosPrev" disabled>上一页</button>
+    <span id="videosPageInfo" class="page-info"></span>
     <button id="videosNext" disabled>下一页</button>
   </div>
 </div>
@@ -36,6 +37,7 @@
   <div id="playlistGrid" class="grid"></div>
   <div class="pagination">
     <button id="playlistsPrev" disabled>上一页</button>
+    <span id="playlistsPageInfo" class="page-info"></span>
     <button id="playlistsNext" disabled>下一页</button>
   </div>
 </div>
@@ -49,6 +51,13 @@ let searchMode = false;
 
 let videoPageTokens = { current: '', prev: [], next: '' };
 let playlistPageTokens = { current: '', prev: [], next: '' };
+let videoPageNum = 1;
+let playlistPageNum = 1;
+
+function updatePageInfo(elId, pageNum, pageInfo) {
+  const totalPages = Math.max(1, Math.ceil(pageInfo.totalResults / pageInfo.resultsPerPage));
+  document.getElementById(elId).textContent = `第 ${pageNum} 页 / 共 ${totalPages} 页`;
+}
 
 async function loadChannelInfo() {
   const data = await ytFetch('channels', { part: 'snippet,contentDetails,statistics', id: channelId });
@@ -93,6 +102,7 @@ async function loadVideos(pageToken = '') {
   videoPageTokens.next = data.nextPageToken || '';
   document.getElementById('videosPrev').disabled = videoPageTokens.prev.length === 0;
   document.getElementById('videosNext').disabled = !videoPageTokens.next;
+  updatePageInfo('videosPageInfo', videoPageNum, data.pageInfo);
 }
 
 async function searchVideos(query, pageToken = '') {
@@ -113,6 +123,8 @@ async function searchVideos(query, pageToken = '') {
   videoPageTokens.next = data.nextPageToken || '';
   document.getElementById('videosPrev').disabled = videoPageTokens.prev.length === 0;
   document.getElementById('videosNext').disabled = !videoPageTokens.next;
+  const totalPages = Math.max(1, Math.ceil(data.pageInfo.totalResults / data.pageInfo.resultsPerPage));
+  document.getElementById('videosPageInfo').textContent = `第 ${videoPageNum} 页 / 约共 ${totalPages} 页`;
 }
 
 async function loadPlaylists(pageToken = '') {
@@ -138,6 +150,7 @@ async function loadPlaylists(pageToken = '') {
   playlistPageTokens.next = data.nextPageToken || '';
   document.getElementById('playlistsPrev').disabled = playlistPageTokens.prev.length === 0;
   document.getElementById('playlistsNext').disabled = !playlistPageTokens.next;
+  updatePageInfo('playlistsPageInfo', playlistPageNum, data.pageInfo);
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -152,20 +165,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 document.getElementById('videosNext').onclick = () => {
   videoPageTokens.prev.push(videoPageTokens.current);
+  videoPageNum++;
   const q = document.getElementById('searchInput').value;
   searchMode ? searchVideos(q, videoPageTokens.next) : loadVideos(videoPageTokens.next);
 };
 document.getElementById('videosPrev').onclick = () => {
   const token = videoPageTokens.prev.pop() || '';
+  videoPageNum--;
   const q = document.getElementById('searchInput').value;
   searchMode ? searchVideos(q, token) : loadVideos(token);
 };
 document.getElementById('playlistsNext').onclick = () => {
   playlistPageTokens.prev.push(playlistPageTokens.current);
+  playlistPageNum++;
   loadPlaylists(playlistPageTokens.next);
 };
 document.getElementById('playlistsPrev').onclick = () => {
   const token = playlistPageTokens.prev.pop() || '';
+  playlistPageNum--;
   loadPlaylists(token);
 };
 
@@ -174,6 +191,7 @@ document.getElementById('searchBtn').onclick = () => {
   if (!q) return;
   searchMode = true;
   videoPageTokens = { current: '', prev: [], next: '' };
+  videoPageNum = 1;
   document.getElementById('clearSearchBtn').style.display = '';
   searchVideos(q);
 };
@@ -182,6 +200,7 @@ document.getElementById('clearSearchBtn').onclick = () => {
   document.getElementById('searchInput').value = '';
   document.getElementById('clearSearchBtn').style.display = 'none';
   videoPageTokens = { current: '', prev: [], next: '' };
+  videoPageNum = 1;
   loadVideos();
 };
 
