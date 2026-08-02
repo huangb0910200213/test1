@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>播放</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="watch-page">
+<a id="backLink" href="index.html" class="back">← 返回</a>
+<div class="player-wrap">
+  <iframe id="player"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allow="autoplay; encrypted-media; fullscreen"
+    allowfullscreen></iframe>
+</div>
+<script src="common.js"></script>
+<script>
+const videoId = qs('v');
+const list = qs('list');
+const channel = qs('channel');
+
+let backUrl = 'index.html';
+if (list) backUrl = `playlist.html?list=${list}${channel ? '&channel=' + channel : ''}`;
+else if (channel) backUrl = `channel.html?id=${channel}`;
+document.getElementById('backLink').href = backUrl;
+
+let src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+if (list) src += `&list=${list}`;
+document.getElementById('player').src = src;
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>频道</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a href="index.html" class="back">← 首页</a>
+  <h1 id="channelName">加载中...</h1>
+</header>
+
+<div id="channelInfo" class="channel-info"></div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="videos">最新视频</button>
+  <button class="tab-btn" data-tab="playlists">播放列表</button>
+</div>
+
+<div id="videosTab" class="tab-content">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="在此频道内搜索视频...">
+    <button id="searchBtn">搜索</button>
+    <button id="clearSearchBtn" style="display:none;">清除</button>
+  </div>
+  <div id="videoGrid" class="grid"></div>
+  <div class="pagination">
+    <button id="videosPrev" disabled>上一页</button>
+    <button id="videosNext" disabled>下一页</button>
+  </div>
+</div>
+
+<div id="playlistsTab" class="tab-content" style="display:none;">
+  <div id="playlistGrid" class="grid"></div>
+  <div class="pagination">
+    <button id="playlistsPrev" disabled>上一页</button>
+    <button id="playlistsNext" disabled>下一页</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+const channelId = qs('id');
+let uploadsPlaylistId = null;
+let searchMode = false;
+
+let videoPageTokens = { current: '', prev: [], next: '' };
+let playlistPageTokens = { current: '', prev: [], next: '' };
+
+async function loadChannelInfo() {
+  const data = await ytFetch('channels', { part: 'snippet,contentDetails,statistics', id: channelId });
+  const ch = data.items[0];
+  uploadsPlaylistId = ch.contentDetails.relatedPlaylists.uploads;
+  document.getElementById('channelName').textContent = ch.snippet.title;
+  document.getElementById('channelInfo').innerHTML = `
+    <img src="${ch.snippet.thumbnails.medium.url}" class="avatar-lg">
+    <div>
+      <p>${(ch.snippet.description || '').replace(/\n/g, '<br>').slice(0, 300)}</p>
+      <p class="muted">${Number(ch.statistics.subscriberCount).toLocaleString()} 订阅 · ${Number(ch.statistics.videoCount).toLocaleString()} 个视频</p>
+    </div>`;
+}
+
+function renderVideoCard(title, thumbUrl, publishedAt, videoId) {
+  const card = document.createElement('a');
+  card.className = 'card video-card';
+  card.href = `watch.html?v=${videoId}&channel=${channelId}`;
+  card.innerHTML = `
+    <img src="${thumbUrl}">
+    <div class="card-body">
+      <p class="title">${title}</p>
+      <p class="muted">${formatDate(publishedAt)}</p>
+    </div>`;
+  return card;
+}
+
+async function loadVideos(pageToken = '') {
+  const grid = document.getElementById('videoGrid');
+  grid.innerHTML = '<p class="loading">加载中...</p>';
+  const data = await ytFetch('playlistItems', {
+    part: 'snippet', playlistId: uploadsPlaylistId, maxResults: 12, pageToken
+  });
+  grid.innerHTML = '';
+  data.items.forEach(item => {
+    grid.appendChild(renderVideoCard(
+      item.snippet.title, item.snippet.thumbnails.medium.url,
+      item.snippet.publishedAt, item.snippet.resourceId.videoId
+    ));
+  });
+  videoPageTokens.current = pageToken;
+  videoPageTokens.next = data.nextPageToken || '';
+  document.getElementById('videosPrev').disabled = videoPageTokens.prev.length === 0;
+  document.getElementById('videosNext').disabled = !videoPageTokens.next;
+}
+
+async function searchVideos(query, pageToken = '') {
+  const grid = document.getElementById('videoGrid');
+  grid.innerHTML = '<p class="loading">搜索中...</p>';
+  const data = await ytFetch('search', {
+    part: 'snippet', channelId, q: query, type: 'video', order: 'date', maxResults: 12, pageToken
+  });
+  grid.innerHTML = '';
+  if (data.items.length === 0) grid.innerHTML = '<p class="muted">没有找到结果</p>';
+  data.items.forEach(item => {
+    grid.appendChild(renderVideoCard(
+      item.snippet.title, item.snippet.thumbnails.medium.url,
+      item.snippet.publishedAt, item.id.videoId
+    ));
+  });
+  videoPageTokens.current = pageToken;
+  videoPageTokens.next = data.nextPageToken || '';
+  document.getElementById('videosPrev').disabled = videoPageTokens.prev.length === 0;
+  document.getElementById('videosNext').disabled = !videoPageTokens.next;
+}
+
+async function loadPlaylists(pageToken = '') {
+  const grid = document.getElementById('playlistGrid');
+  grid.innerHTML = '<p class="loading">加载中...</p>';
+  const data = await ytFetch('playlists', {
+    part: 'snippet,contentDetails', channelId, maxResults: 12, pageToken
+  });
+  grid.innerHTML = '';
+  data.items.forEach(pl => {
+    const card = document.createElement('a');
+    card.className = 'card playlist-card';
+    card.href = `playlist.html?list=${pl.id}&channel=${channelId}`;
+    card.innerHTML = `
+      <img src="${pl.snippet.thumbnails.medium.url}">
+      <div class="card-body">
+        <p class="title">${pl.snippet.title}</p>
+        <p class="muted">${pl.contentDetails.itemCount} 个视频</p>
+      </div>`;
+    grid.appendChild(card);
+  });
+  playlistPageTokens.current = pageToken;
+  playlistPageTokens.next = data.nextPageToken || '';
+  document.getElementById('playlistsPrev').disabled = playlistPageTokens.prev.length === 0;
+  document.getElementById('playlistsNext').disabled = !playlistPageTokens.next;
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('videosTab').style.display = tab === 'videos' ? '' : 'none';
+    document.getElementById('playlistsTab').style.display = tab === 'playlists' ? '' : 'none';
+  };
+});
+
+document.getElementById('videosNext').onclick = () => {
+  videoPageTokens.prev.push(videoPageTokens.current);
+  const q = document.getElementById('searchInput').value;
+  searchMode ? searchVideos(q, videoPageTokens.next) : loadVideos(videoPageTokens.next);
+};
+document.getElementById('videosPrev').onclick = () => {
+  const token = videoPageTokens.prev.pop() || '';
+  const q = document.getElementById('searchInput').value;
+  searchMode ? searchVideos(q, token) : loadVideos(token);
+};
+document.getElementById('playlistsNext').onclick = () => {
+  playlistPageTokens.prev.push(playlistPageTokens.current);
+  loadPlaylists(playlistPageTokens.next);
+};
+document.getElementById('playlistsPrev').onclick = () => {
+  const token = playlistPageTokens.prev.pop() || '';
+  loadPlaylists(token);
+};
+
+document.getElementById('searchBtn').onclick = () => {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  searchMode = true;
+  videoPageTokens = { current: '', prev: [], next: '' };
+  document.getElementById('clearSearchBtn').style.display = '';
+  searchVideos(q);
+};
+document.getElementById('clearSearchBtn').onclick = () => {
+  searchMode = false;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearSearchBtn').style.display = 'none';
+  videoPageTokens = { current: '', prev: [], next: '' };
+  loadVideos();
+};
+
+(async () => {
+  await loadChannelInfo();
+  await loadVideos();
+  await loadPlaylists();
+})();
+</script>
+</body>
+</html>

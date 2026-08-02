@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>播放列表</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a id="backLink" href="index.html" class="back">← 返回频道</a>
+  <h1 id="playlistTitle">加载中...</h1>
+</header>
+<p id="playlistDesc" class="muted" style="padding:0 16px;"></p>
+
+<div id="videoGrid" class="grid"></div>
+<div class="pagination">
+  <button id="prevBtn" disabled>上一页</button>
+  <button id="nextBtn" disabled>下一页</button>
+</div>
+
+<script src="common.js"></script>
+<script>
+const playlistId = qs('list');
+const channelId = qs('channel');
+if (channelId) document.getElementById('backLink').href = `channel.html?id=${channelId}`;
+
+let tokens = { current: '', prev: [], next: '' };
+
+async function loadPlaylistInfo() {
+  const data = await ytFetch('playlists', { part: 'snippet', id: playlistId });
+  const pl = data.items[0];
+  document.getElementById('playlistTitle').textContent = pl.snippet.title;
+  document.getElementById('playlistDesc').textContent = pl.snippet.description || '';
+}
+
+async function loadVideos(pageToken = '') {
+  const grid = document.getElementById('videoGrid');
+  grid.innerHTML = '<p class="loading">加载中...</p>';
+  const data = await ytFetch('playlistItems', { part: 'snippet', playlistId, maxResults: 12, pageToken });
+  grid.innerHTML = '';
+  data.items.forEach(item => {
+    const videoId = item.snippet.resourceId.videoId;
+    const card = document.createElement('a');
+    card.className = 'card video-card';
+    card.href = `watch.html?v=${videoId}&list=${playlistId}${channelId ? '&channel=' + channelId : ''}`;
+    card.innerHTML = `
+      <img src="${item.snippet.thumbnails.medium.url}">
+      <div class="card-body">
+        <p class="title">${item.snippet.title}</p>
+        <p class="muted">${formatDate(item.snippet.publishedAt)}</p>
+      </div>`;
+    grid.appendChild(card);
+  });
+  tokens.current = pageToken;
+  tokens.next = data.nextPageToken || '';
+  document.getElementById('prevBtn').disabled = tokens.prev.length === 0;
+  document.getElementById('nextBtn').disabled = !tokens.next;
+}
+
+document.getElementById('nextBtn').onclick = () => {
+  tokens.prev.push(tokens.current);
+  loadVideos(tokens.next);
+};
+document.getElementById('prevBtn').onclick = () => {
+  const token = tokens.prev.pop() || '';
+  loadVideos(token);
+};
+
+(async () => {
+  await loadPlaylistInfo();
+  await loadVideos();
+})();
+</script>
+</body>
+</html>
