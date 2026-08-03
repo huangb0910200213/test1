@@ -89,7 +89,7 @@ async function loadVideos(pageToken = '') {
   const grid = document.getElementById('videoGrid');
   grid.innerHTML = '<p class="loading">加载中...</p>';
   const data = await ytFetch('playlistItems', {
-    part: 'snippet', playlistId: uploadsPlaylistId, maxResults: 12, pageToken
+    part: 'snippet', playlistId: uploadsPlaylistId, maxResults: 50, pageToken
   });
   grid.innerHTML = '';
   data.items.forEach(item => {
@@ -109,7 +109,7 @@ async function searchVideos(query, pageToken = '') {
   const grid = document.getElementById('videoGrid');
   grid.innerHTML = '<p class="loading">搜索中...</p>';
   const data = await ytFetch('search', {
-    part: 'snippet', channelId, q: query, type: 'video', order: 'date', maxResults: 12, pageToken
+    part: 'snippet', channelId, q: query, type: 'video', order: 'date', maxResults: 50, pageToken
   });
   grid.innerHTML = '';
   if (data.items.length === 0) grid.innerHTML = '<p class="muted">没有找到结果</p>';
@@ -131,7 +131,7 @@ async function loadPlaylists(pageToken = '') {
   const grid = document.getElementById('playlistGrid');
   grid.innerHTML = '<p class="loading">加载中...</p>';
   const data = await ytFetch('playlists', {
-    part: 'snippet,contentDetails', channelId, maxResults: 12, pageToken
+    part: 'snippet,contentDetails', channelId, maxResults: 50, pageToken
   });
   grid.innerHTML = '';
   data.items.forEach(pl => {

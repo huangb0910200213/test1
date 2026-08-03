@@ -39,7 +39,7 @@ async function loadPlaylistInfo() {
 async function loadVideos(pageToken = '') {
   const grid = document.getElementById('videoGrid');
   grid.innerHTML = '<p class="loading">加载中...</p>';
-  const data = await ytFetch('playlistItems', { part: 'snippet', playlistId, maxResults: 12, pageToken });
+  const data = await ytFetch('playlistItems', { part: 'snippet', playlistId, maxResults: 50, pageToken });
   grid.innerHTML = '';
   data.items.forEach(item => {
     const videoId = item.snippet.resourceId.videoId;
