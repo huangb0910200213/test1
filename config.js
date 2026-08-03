@@ -12,6 +12,7 @@ const CHANNELS = [
   { id: "UCqyeb_UHHViB2uVdWYpVmyQ", name: "dharma nation" },
   { id: "UC29ju8bIPH5as8OGnQzwJyA", name: "Traversy media" },
   { id: "UC_gSotrFVZ_PiAxo3fTQVuQ", name: "健身的magmidt" },
+  { id: "UC9laSV_SYydzuPm_kbEXvbg", name: "左程云-算法" },
   // 添加更多频道就复制一行，改成对应的频道 ID 和名字，例如：
   // { id: "UCxxxxxxxxxxxxxxxxxxxxxx", name: "频道名" },
 ];
