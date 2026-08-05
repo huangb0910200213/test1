@@ -14,7 +14,7 @@ const CHANNELS = [
   { id: "UC_gSotrFVZ_PiAxo3fTQVuQ", name: "健身的magmidt" },
   { id: "UC9laSV_SYydzuPm_kbEXvbg", name: "左程云-算法" },
   { id: "UCvn_XCl_mgQmt3sD753zdJA", name: "Rachel's English" },
-  { id: ""UC-g0gSStENkYPXFRsKrlvyA, name: "The English Coach" },
+  { id: "UC-g0gSStENkYPXFRsKrlvyA", name: "The English Coach" },
   // 添加更多频道就复制一行，改成对应的频道 ID 和名字，例如：
   // { id: "UCxxxxxxxxxxxxxxxxxxxxxx", name: "频道名" },
 ];
