@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>视频列表</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a href="index.html" class="back">← 首页</a>
+  <h1>视频列表</h1>
+</header>
+
+<div id="videoGrid" class="grid"></div>
+
+<script src="config.js"></script>
+<script>
+function init() {
+  const grid = document.getElementById('videoGrid');
+  VIDEOS.forEach(v => {
+    const card = document.createElement('a');
+    card.className = 'card video-card';
+    card.href = `watch.html?v=${v.id}`;
+    card.innerHTML = `
+      <img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg">
+      <div class="card-body">
+        <p class="title">${v.title || v.id}</p>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+init();
+</script>
+</body>
+</html>

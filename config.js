@@ -18,3 +18,13 @@ const CHANNELS = [
   // 添加更多频道就复制一行，改成对应的频道 ID 和名字，例如：
   // { id: "UCxxxxxxxxxxxxxxxxxxxxxx", name: "频道名" },
 ];
+
+// ============================================
+// 在这里配置视频列表页面（videos.html）要显示的视频
+// 视频 ID 是网址 watch?v= 后面那串字符
+// ============================================
+const VIDEOS = [
+  { id: "pb0s3eLFuVM", title:"test"},
+  // 添加更多视频就复制一行，改成对应的视频 ID 和标题，例如：
+  // { id: "xxxxxxxxxxx", title: "视频标题" },
+];
