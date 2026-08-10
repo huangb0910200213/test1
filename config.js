@@ -25,6 +25,7 @@ const CHANNELS = [
 // ============================================
 const VIDEOS = [
   { id: "pb0s3eLFuVM", title:"test"},
+  { id: "T2yVR4nLX1A", title:"test"},
   // 添加更多视频就复制一行，改成对应的视频 ID 和标题，例如：
   // { id: "xxxxxxxxxxx", title: "视频标题" },
 ];
