@@ -8,7 +8,7 @@
 </head>
 <body>
 <header>
-  <a href="index.html" class="back">← 首页</a>
+  <a href="index.html" id="backLink" class="back">← 首页</a>
   <h1 id="channelName">加载中...</h1>
 </header>
 
@@ -75,9 +75,10 @@ async function loadChannelInfo() {
 function renderVideoCard(title, thumbUrl, publishedAt, videoId) {
   const card = document.createElement('a');
   card.className = 'card video-card';
+  card.dataset.videoId = videoId;
   card.href = `watch.html?v=${videoId}&channel=${channelId}`;
   card.innerHTML = `
-    <img src="${thumbUrl}">
+    <div class="thumb"><img src="${thumbUrl}"></div>
     <div class="card-body">
       <p class="title">${title}</p>
       <p class="muted">${formatDate(publishedAt)}</p>
@@ -103,6 +104,8 @@ async function loadVideos(pageToken = '') {
   document.getElementById('videosPrev').disabled = videoPageTokens.prev.length === 0;
   document.getElementById('videosNext').disabled = !videoPageTokens.next;
   updatePageInfo('videosPageInfo', videoPageNum, data.pageInfo);
+  const ids = data.items.map(item => item.snippet.resourceId.videoId);
+  fetchVideoDurations(ids).then(m => attachDurations(grid, m)).catch(() => {});
 }
 
 async function searchVideos(query, pageToken = '') {
@@ -125,6 +128,8 @@ async function searchVideos(query, pageToken = '') {
   document.getElementById('videosNext').disabled = !videoPageTokens.next;
   const totalPages = Math.max(1, Math.ceil(data.pageInfo.totalResults / data.pageInfo.resultsPerPage));
   document.getElementById('videosPageInfo').textContent = `第 ${videoPageNum} 页 / 约共 ${totalPages} 页`;
+  const ids = data.items.map(item => item.id.videoId);
+  fetchVideoDurations(ids).then(m => attachDurations(grid, m)).catch(() => {});
 }
 
 async function loadPlaylists(pageToken = '') {
@@ -153,15 +158,12 @@ async function loadPlaylists(pageToken = '') {
   updatePageInfo('playlistsPageInfo', playlistPageNum, data.pageInfo);
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const tab = btn.dataset.tab;
-    document.getElementById('videosTab').style.display = tab === 'videos' ? '' : 'none';
-    document.getElementById('playlistsTab').style.display = tab === 'playlists' ? '' : 'none';
-  };
-});
+function setTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('videosTab').style.display = tab === 'videos' ? '' : 'none';
+  document.getElementById('playlistsTab').style.display = tab === 'playlists' ? '' : 'none';
+}
+document.querySelectorAll('.tab-btn').forEach(btn => { btn.onclick = () => setTab(btn.dataset.tab); });
 
 document.getElementById('videosNext').onclick = () => {
   videoPageTokens.prev.push(videoPageTokens.current);
@@ -204,10 +206,74 @@ document.getElementById('clearSearchBtn').onclick = () => {
   loadVideos();
 };
 
+// ============ 从播放页/播放列表页返回时恢复原位置 ============
+const STATE_KEY = 'channelState';
+
+function saveState() {
+  const activeTab = document.getElementById('playlistsTab').style.display === 'none' ? 'videos' : 'playlists';
+  sessionStorage.setItem(STATE_KEY, JSON.stringify({
+    videoTokens: videoPageTokens, videoPageNum,
+    playlistTokens: playlistPageTokens, playlistPageNum,
+    searchMode, query: document.getElementById('searchInput').value,
+    activeTab, scrollY: window.scrollY
+  }));
+}
+document.getElementById('videoGrid').addEventListener('click', saveState);
+document.getElementById('playlistGrid').addEventListener('click', saveState);
+
+// bfcache 已原样还原页面时,清掉备用状态
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) sessionStorage.removeItem(STATE_KEY);
+});
+
+// bfcache 失效时(全新加载),从 sessionStorage 恢复;
+// 只有从播放页/播放列表页返回才恢复,从首页进来是全新状态
+function loadSavedState() {
+  if (!/\/watch\.html|\/playlist\.html/.test(document.referrer)) {
+    sessionStorage.removeItem(STATE_KEY);
+    return null;
+  }
+  let s = null;
+  try { s = JSON.parse(sessionStorage.getItem(STATE_KEY) || 'null'); } catch (e) {}
+  sessionStorage.removeItem(STATE_KEY);
+  return s;
+}
+
+async function loadVideosTab(query = '') {
+  if (searchMode) {
+    document.getElementById('searchInput').value = query;
+    document.getElementById('clearSearchBtn').style.display = '';
+    await searchVideos(query, videoPageTokens.current);
+  } else {
+    await loadVideos(videoPageTokens.current);
+  }
+}
+
+attachBack(document.getElementById('backLink'));
+
 (async () => {
+  const s = loadSavedState();
   await loadChannelInfo();
-  await loadVideos();
-  await loadPlaylists();
+  if (!s) {
+    await loadVideos();
+    await loadPlaylists();
+    return;
+  }
+  Object.assign(videoPageTokens, { current: '', prev: [], next: '' }, s.videoTokens);
+  Object.assign(playlistPageTokens, { current: '', prev: [], next: '' }, s.playlistTokens);
+  videoPageNum = s.videoPageNum || 1;
+  playlistPageNum = s.playlistPageNum || 1;
+  searchMode = !!s.searchMode;
+  setTab(s.activeTab || 'videos');
+  if (s.activeTab === 'playlists') {
+    await loadPlaylists(playlistPageTokens.current);
+    window.scrollTo(0, s.scrollY || 0);
+    await loadVideosTab(s.query || '');
+  } else {
+    await loadVideosTab(s.query || '');
+    window.scrollTo(0, s.scrollY || 0);
+    await loadPlaylists(playlistPageTokens.current);
+  }
 })();
 </script>
 </body>

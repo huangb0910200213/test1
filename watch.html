@@ -24,6 +24,8 @@ let backUrl = 'index.html';
 if (list) backUrl = `playlist.html?list=${list}${channel ? '&channel=' + channel : ''}`;
 else if (channel) backUrl = `channel.html?id=${channel}`;
 document.getElementById('backLink').href = backUrl;
+// 同站来源返回用 history.back(),bfcache 会原样恢复上一个列表页
+attachBack(document.getElementById('backLink'));
 
 let src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
 if (list) src += `&list=${list}`;

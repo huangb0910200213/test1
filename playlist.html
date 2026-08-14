@@ -45,9 +45,10 @@ async function loadVideos(pageToken = '') {
     const videoId = item.snippet.resourceId.videoId;
     const card = document.createElement('a');
     card.className = 'card video-card';
+    card.dataset.videoId = videoId;
     card.href = `watch.html?v=${videoId}&list=${playlistId}${channelId ? '&channel=' + channelId : ''}`;
     card.innerHTML = `
-      <img src="${item.snippet.thumbnails.medium.url}">
+      <div class="thumb"><img src="${item.snippet.thumbnails.medium.url}"></div>
       <div class="card-body">
         <p class="title">${item.snippet.title}</p>
         <p class="muted">${formatDate(item.snippet.publishedAt)}</p>
@@ -60,6 +61,8 @@ async function loadVideos(pageToken = '') {
   document.getElementById('nextBtn').disabled = !tokens.next;
   const totalPages = Math.max(1, Math.ceil(data.pageInfo.totalResults / data.pageInfo.resultsPerPage));
   document.getElementById('pageInfo').textContent = `第 ${pageNum} 页 / 共 ${totalPages} 页`;
+  const ids = data.items.map(item => item.snippet.resourceId.videoId);
+  fetchVideoDurations(ids).then(m => attachDurations(grid, m)).catch(() => {});
 }
 
 document.getElementById('nextBtn').onclick = () => {
@@ -73,9 +76,36 @@ document.getElementById('prevBtn').onclick = () => {
   loadVideos(token);
 };
 
+// ============ 从播放页返回时恢复原位置 ============
+const STATE_KEY = 'playlistState';
+
+function saveState() {
+  sessionStorage.setItem(STATE_KEY, JSON.stringify({ tokens, pageNum, scrollY: window.scrollY }));
+}
+document.getElementById('videoGrid').addEventListener('click', saveState);
+
+// bfcache 已原样还原页面时,清掉备用状态
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) sessionStorage.removeItem(STATE_KEY);
+});
+
+attachBack(document.getElementById('backLink'));
+
 (async () => {
   await loadPlaylistInfo();
-  await loadVideos();
+  let s = null;
+  if (/\/watch\.html(\?|$)/.test(document.referrer)) {
+    try { s = JSON.parse(sessionStorage.getItem(STATE_KEY) || 'null'); } catch (e) {}
+  }
+  sessionStorage.removeItem(STATE_KEY);
+  if (s) {
+    Object.assign(tokens, { current: '', prev: [], next: '' }, s.tokens);
+    pageNum = s.pageNum || 1;
+    await loadVideos(tokens.current);
+    window.scrollTo(0, s.scrollY || 0);
+  } else {
+    await loadVideos();
+  }
 })();
 </script>
 </body>
