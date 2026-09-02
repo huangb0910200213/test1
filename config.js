@@ -15,6 +15,10 @@ const CHANNELS = [
   { id: "UC9laSV_SYydzuPm_kbEXvbg", name: "左程云-算法" },
   { id: "UCvn_XCl_mgQmt3sD753zdJA", name: "Rachel's English" },
   { id: "UC-g0gSStENkYPXFRsKrlvyA", name: "The English Coach" },
+  { id: "UClLEMac0ZjZCsVOTiaBtJBg", name: "芳斯塔芙" },
+  { id: "UCa-sZyLu0Uzarrdr-wUNtAw", name: "严伯钧" },
+  { id: "UC7_gcs09iThXybpVgjHZ_7g", name: "PBS Space Time" },
+  { id: "UCYO_jab_esuFRV4b17AJtAw", name: "3Blue1Brown" },
   // 添加更多频道就复制一行，改成对应的频道 ID 和名字，例如：
   // { id: "UCxxxxxxxxxxxxxxxxxxxxxx", name: "频道名" },
 ];
