@@ -23,7 +23,8 @@ async function init() {
     const ids = CHANNELS.map(c => c.id).join(',');
     const data = await ytFetch('channels', { part: 'snippet,statistics', id: ids });
     grid.innerHTML = '';
-    data.items.forEach(ch => {
+    const byId = Object.fromEntries(data.items.map(ch => [ch.id, ch]));
+    CHANNELS.map(c => byId[c.id]).filter(Boolean).forEach(ch => {
       const card = document.createElement('a');
       card.className = 'card channel-card';
       card.href = `channel.html?id=${ch.id}`;
