@@ -19,6 +19,7 @@ const CHANNELS = [
   { id: "UCa-sZyLu0Uzarrdr-wUNtAw", name: "严伯钧" },
   { id: "UC7_gcs09iThXybpVgjHZ_7g", name: "PBS Space Time" },
   { id: "UCYO_jab_esuFRV4b17AJtAw", name: "3Blue1Brown" },
+  { id: "UCX6b17PVsYBQ0ip5gyeme-Q", name: "Crash Course" },
   // 添加更多频道就复制一行，改成对应的频道 ID 和名字，例如：
   // { id: "UCxxxxxxxxxxxxxxxxxxxxxx", name: "频道名" },
 ];
